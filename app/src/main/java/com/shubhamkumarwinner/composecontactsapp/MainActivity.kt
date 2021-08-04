@@ -108,8 +108,7 @@ Toast.makeText(LocalContext.current,
         ContextCompat.checkSelfPermission(
             context,
             Manifest.permission.READ_CONTACTS
-        ),
-        -> {
+        ) -> {
             // Some works that require permission
             Log.d("ExampleScreen", "Code requires permission")
             permissionGranted = true
