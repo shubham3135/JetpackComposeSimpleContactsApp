@@ -7,9 +7,12 @@ import android.net.Uri
 import android.os.Handler
 import android.provider.ContactsContract
 import androidx.lifecycle.*
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class ContactsViewModel(private val application: Application) : ViewModel() {
+@HiltViewModel
+class ContactsViewModel @Inject constructor(private val application: Application) : ViewModel() {
     private val _contacts = MutableLiveData<List<Contacts>>()
     val contacts: LiveData<List<Contacts>> get() = _contacts
 
@@ -81,15 +84,4 @@ class ContactsViewModel(private val application: Application) : ViewModel() {
         registerContentObserver(uri, true, contentObserver)
         return contentObserver
     }
-}
-
-class ContactsViewModelProvider(private val application: Application) : ViewModelProvider.Factory {
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(ContactsViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return ContactsViewModel(application) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
-    }
-
 }

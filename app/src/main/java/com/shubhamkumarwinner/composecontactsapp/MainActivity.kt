@@ -28,13 +28,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
 import com.shubhamkumarwinner.composecontactsapp.ui.theme.ComposeContactsAppTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val viewModel: ContactsViewModel by viewModels { ContactsViewModelProvider(application) }
+    private val viewModel: ContactsViewModel by viewModels()
 
     @ExperimentalPermissionsApi
     @ExperimentalFoundationApi
