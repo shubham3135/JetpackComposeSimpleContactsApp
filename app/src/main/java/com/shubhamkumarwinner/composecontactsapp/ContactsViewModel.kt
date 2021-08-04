@@ -16,9 +16,9 @@ class ContactsViewModel(private val application: Application) : ViewModel() {
     private var contentObserver: ContentObserver? = null
 
 
-    fun loadContacts(){
+    fun loadContacts() {
         viewModelScope.launch {
-            _contacts.value= queryContact()
+            _contacts.value = queryContact()
             if (contentObserver == null) {
                 contentObserver = application.applicationContext.contentResolver.registerObserver(
                     ContactsContract.Contacts.CONTENT_URI
@@ -29,14 +29,15 @@ class ContactsViewModel(private val application: Application) : ViewModel() {
         }
     }
 
-    private fun  queryContact(): List<Contacts>{
+    private fun queryContact(): List<Contacts> {
         val contactList = mutableListOf<Contacts>()
         val contentResolver = application.applicationContext.contentResolver
         val projection = arrayOf(
             ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY,
             ContactsContract.CommonDataKinds.Phone.NUMBER
         )
-        val sortOrder = "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY.uppercase()} ASC"
+        val sortOrder =
+            "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY.uppercase()} ASC"
 
         viewModelScope.launch {
             val query = contentResolver.query(
@@ -51,14 +52,15 @@ class ContactsViewModel(private val application: Application) : ViewModel() {
                 // Cache column indices.
                 val nameColumn =
                     cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY)
-                val numberColumn = cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER)
+                val numberColumn =
+                    cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER)
 
 
                 while (cursor.moveToNext()) {
                     val name = cursor.getString(nameColumn)
                     var number = cursor.getString(numberColumn)
                     number = number.replace("[()\\s-]+", "")
-                    if (number.length>=10) {
+                    if (number.length >= 10) {
                         contactList += Contacts(name, number)
                     }
                 }
@@ -69,7 +71,7 @@ class ContactsViewModel(private val application: Application) : ViewModel() {
 
     private fun ContentResolver.registerObserver(
         uri: Uri,
-        observer: (selfChange: Boolean) -> Unit
+        observer: (selfChange: Boolean) -> Unit,
     ): ContentObserver {
         val contentObserver = object : ContentObserver(Handler()) {
             override fun onChange(selfChange: Boolean) {
@@ -81,9 +83,9 @@ class ContactsViewModel(private val application: Application) : ViewModel() {
     }
 }
 
-class ContactsViewModelProvider(private val application: Application): ViewModelProvider.Factory{
+class ContactsViewModelProvider(private val application: Application) : ViewModelProvider.Factory {
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(ContactsViewModel::class.java)){
+        if (modelClass.isAssignableFrom(ContactsViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return ContactsViewModel(application) as T
         }

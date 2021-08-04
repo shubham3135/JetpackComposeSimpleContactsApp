@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -33,16 +34,13 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.shubhamkumarwinner.composecontactsapp.ui.theme.ComposeContactsAppTheme
 
 class MainActivity : ComponentActivity() {
-    private lateinit var viewModel: ContactsViewModel
-    private lateinit var viewModelProvider: ContactsViewModelProvider
+    private val viewModel: ContactsViewModel by viewModels { ContactsViewModelProvider(application) }
 
     @ExperimentalPermissionsApi
     @ExperimentalFoundationApi
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModelProvider = ContactsViewModelProvider(application)
-        viewModel = ViewModelProvider(this, viewModelProvider).get(ContactsViewModel::class.java)
         var listContact = mutableListOf<Contacts>()
 
         setContent {
