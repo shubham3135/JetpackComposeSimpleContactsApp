@@ -48,7 +48,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             var doNotShowRationale by rememberSaveable { mutableStateOf(false) }
 
-            // Camera permission state
+            // Contact permission state
             val contactPermissionState = rememberPermissionState(
                 Manifest.permission.READ_CONTACTS
             )
