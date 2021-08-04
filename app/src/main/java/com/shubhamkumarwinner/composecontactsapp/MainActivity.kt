@@ -1,14 +1,13 @@
 package com.shubhamkumarwinner.composecontactsapp
 
 import android.Manifest
-import android.content.pm.PackageManager
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
+import android.provider.Settings
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -17,20 +16,27 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberPermissionState
 import com.shubhamkumarwinner.composecontactsapp.ui.theme.ComposeContactsAppTheme
 
 class MainActivity : ComponentActivity() {
     private lateinit var viewModel: ContactsViewModel
     private lateinit var viewModelProvider: ContactsViewModelProvider
 
+    @ExperimentalPermissionsApi
     @ExperimentalFoundationApi
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,19 +44,78 @@ class MainActivity : ComponentActivity() {
         viewModelProvider = ContactsViewModelProvider(application)
         viewModel = ViewModelProvider(this, viewModelProvider).get(ContactsViewModel::class.java)
         var listContact = mutableListOf<Contacts>()
-        viewModel.loadContacts()
-        viewModel.contacts.observe(this, Observer {
-            listContact = it.toMutableList()
-        })
+
         setContent {
-            ComposeContactsAppTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(color = MaterialTheme.colors.background) {
-                    Scaffold(topBar = {
-                        TopAppBar(title = { Text(text = "Contacts") })
-                    }) {
-                        ContactsList(contacts = listContact.toList(),
-                            modifier = Modifier.fillMaxSize())
+            var doNotShowRationale by rememberSaveable { mutableStateOf(false) }
+
+            // Camera permission state
+            val contactPermissionState = rememberPermissionState(
+                Manifest.permission.READ_CONTACTS
+            )
+
+            when {
+                contactPermissionState.hasPermission -> {
+                    viewModel.loadContacts()
+                    viewModel.contacts.observe(this, Observer {
+                        listContact = it.toMutableList()
+                    })
+                    ComposeContactsAppTheme {
+                        // A surface container using the 'background' color from the theme
+                        Surface(color = MaterialTheme.colors.background) {
+                            Scaffold(topBar = {
+                                TopAppBar(title = { Text(text = "Contacts") })
+                            }) {
+                                ContactsList(contacts = listContact.toList(),
+                                    modifier = Modifier.fillMaxSize())
+                            }
+                        }
+                    }
+                }
+                contactPermissionState.shouldShowRationale ||
+                        !contactPermissionState.permissionRequested -> {
+                    if (doNotShowRationale) {
+                        Text("Feature not available")
+                    } else {
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                "The contact is important for this app. Please grant the permission.",
+                                modifier = Modifier.align(CenterHorizontally)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(onClick = { contactPermissionState.launchPermissionRequest() }) {
+                                Text("Request permission")
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(onClick = { doNotShowRationale = true }) {
+                                Text("Don't show rationale again")
+                            }
+                        }
+                    }
+                }
+                else -> {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            "Contact permission denied. See this FAQ with information about why we " +
+                                    "need this permission. Please, grant us access on the Settings screen."
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(onClick = {
+                            startActivity(
+                                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                    .apply {
+                                        data = Uri.parse("package:$packageName")
+                                    })
+                        }) {
+                            Text("Open Settings")
+                        }
                     }
                 }
             }
@@ -59,6 +124,7 @@ class MainActivity : ComponentActivity() {
 }
 
 
+@ExperimentalPermissionsApi
 @ExperimentalFoundationApi
 @RequiresApi(Build.VERSION_CODES.N)
 @Composable
@@ -66,75 +132,20 @@ fun ContactsList(
     contacts: List<Contacts>,
     modifier: Modifier = Modifier,
 ) {
-
-    var permissionGranted = false
-    val activityResultLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()) { result ->
-        /*if (result){
-            permissionGranted = true
-
-        }
-        else if(!shouldShowRequestPermissionRationale(Manifest.permission.READ_CONTACTS)){
-            val alertDialog: AlertDialog.Builder = AlertDialog.Builder(this)
-            alertDialog.setTitle("You have permanently denied contact permission")
-            alertDialog.setMessage("Please allow it in your settings")
-            alertDialog.setPositiveButton(
-                "Settings"
-            ) { _, _ ->
-                startActivity(
-                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                        .apply {
-                            data = Uri.parse("package"+ applicationContext.packageName)
-                        })
-            }
-            alertDialog.setNegativeButton(
-                "Not now"
-            ) { _, _ ->
-
-            }
-            val alert: AlertDialog = alertDialog.create()
-            alert.setCanceledOnTouchOutside(false)
-            alert.show()
-        }
-        else{
-Toast.makeText(LocalContext.current,
-                "Permission is denied",
-                Toast.LENGTH_SHORT).show()
-        }*/
-    }
-    val context = LocalContext.current
-
-    when (PackageManager.PERMISSION_GRANTED) {
-        ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.READ_CONTACTS
-        ) -> {
-            // Some works that require permission
-            Log.d("ExampleScreen", "Code requires permission")
-            permissionGranted = true
-        }
-        else -> {
-            // Asking for permission
-            activityResultLauncher.launch(Manifest.permission.READ_CONTACTS)
-        }
-    }
     val grouped = contacts.groupBy { it.name[0] }
-    if (permissionGranted) {
-        Box(modifier = modifier) {
-            LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                grouped.forEach { (initials, contacts) ->
-                    stickyHeader {
-                        CharacterHeader(char = initials, modifier = Modifier.fillMaxWidth())
-                    }
-                    items(contacts) { contact ->
-                        ContactListItem(contact = contact, modifier = Modifier.fillMaxWidth())
-                    }
+    Box(modifier = modifier) {
+        LazyColumn(modifier = Modifier.fillMaxWidth()) {
+            grouped.forEach { (initials, contacts) ->
+                stickyHeader {
+                    CharacterHeader(char = initials, modifier = Modifier.fillMaxWidth())
                 }
-
+                items(contacts) { contact ->
+                    ContactListItem(contact = contact, modifier = Modifier.fillMaxWidth())
+                }
             }
+
         }
     }
-
 }
 
 @Composable
