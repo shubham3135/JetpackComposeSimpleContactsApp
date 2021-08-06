@@ -16,17 +16,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.Observer
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
@@ -96,26 +95,37 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 else -> {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            "Contact permission denied. See this FAQ with information about why we " +
-                                    "need this permission. Please, grant us access on the Settings screen."
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(onClick = {
-                            startActivity(
-                                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                                    .apply {
-                                        data = Uri.parse("package:$packageName")
-                                    })
-                        }) {
-                            Text("Open Settings")
+                    AlertDialog(
+                        onDismissRequest = {
+
+                        },
+                        title = {
+                            Text(text = "Permission Denied")
+                        },
+                        text = {
+                            Text("Contact permission denied. Please, grant us access on the Settings screen.")
+                        },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    startActivity(
+                                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                            .apply {
+                                                data = Uri.parse("package:$packageName")
+                                            })
+                                }) {
+                                Text("Settings")
+                            }
+                        },
+                        dismissButton = {
+                            Button(
+                                onClick = {
+                                    onBackPressed()
+                                }) {
+                                Text("Not now")
+                            }
                         }
-                    }
+                    )
                 }
             }
         }
