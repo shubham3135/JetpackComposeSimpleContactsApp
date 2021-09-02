@@ -8,7 +8,7 @@ import android.os.Handler
 import android.provider.ContactsContract
 import androidx.lifecycle.*
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import javax.inject.Inject
 
 @HiltViewModel
@@ -40,7 +40,7 @@ class ContactsViewModel @Inject constructor(private val application: Application
             ContactsContract.CommonDataKinds.Phone.NUMBER
         )
         val sortOrder =
-            "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY.uppercase()} ASC"
+            "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY} COLLATE NOCASE ASC"
 
         viewModelScope.launch {
             val query = contentResolver.query(
